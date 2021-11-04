@@ -1,39 +1,59 @@
-import { PreviewCard, StoryCard } from './components';
-import { useStories } from './api';
+import * as React from 'react';
+import {
+	PreviewCard,
+	StoryCard,
+	InfiniteScrollContainer,
+	SkeletonCard,
+} from './components';
+import { useStories, STORY_PAGE_SIZE } from './api';
 import './App.css';
 
 export default function App() {
-	const storyList = useStories();
+	const { data, ...rest } = useStories();
 
 	return (
 		<div className="app-container">
 			<h2>Hacker News</h2>
 			<div className="app-grid">
-				{storyList.map(({ data, isFetching }, i) =>
-					isFetching ? (
-						<div key={`load-${i}`} className="app-skeleton"></div>
-					) : (
-						<StoryCard
-							key={data.id}
-							title={
-								<>
-									<span>{`${i + 1}. `}</span>
-									<a href={data.url}>{data.title}</a>
-								</>
-							}
-							subtitle={
-								<>
-									{`${data.score} ${
-										data.score > 1 ? 'points' : 'point'
-									} by `}
-									<b>{data.by}</b>
-									{` ${getDiffTime(data.time)}`}
-								</>
-							}
-							footer={<PreviewCard {...data.preview} />}
-						/>
-					)
-				)}
+				<InfiniteScrollContainer
+					Skeleton={SkeletonCard}
+					pageSize={STORY_PAGE_SIZE}
+					{...rest}
+				>
+					{data.map((page, pageIndex) => (
+						<React.Fragment key={`page-${pageIndex}`}>
+							{page.map((story, storyIndex) => (
+								<StoryCard
+									key={story.id}
+									title={
+										<>
+											<span>{`${
+												pageIndex * STORY_PAGE_SIZE +
+												storyIndex +
+												1
+											}. `}</span>
+											<a href={story.url}>
+												{story.title}
+											</a>
+										</>
+									}
+									subtitle={
+										<>
+											{`${story.score} ${
+												story.score > 1
+													? 'points'
+													: 'point'
+											} by `}
+											<b>{story.by}</b>
+											{` ${getDiffTime(story.time)}`}
+										</>
+									}
+									footer={<PreviewCard {...story.preview} />}
+								/>
+							))}
+						</React.Fragment>
+					))}
+				</InfiniteScrollContainer>
 			</div>
 		</div>
 	);

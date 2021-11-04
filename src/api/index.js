@@ -1,1 +1,1 @@
-export { default as useStories } from './useStories';
+export * from './useStories';
